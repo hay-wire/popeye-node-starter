@@ -3,10 +3,41 @@
 /**
  * Module dependencies.
  */
+require('dotenv').config({path: '.env.sample'});
+var debug = require('debug')('popeye:server');
+
+if(process.env.CLUSTER === 'yes') {
+
+	const cluster = require('cluster');
+	const numCPUs = require('os').cpus().length;
+
+	if (cluster.isMaster) {
+		console.log('Starting app in cluster mode with '+numCPUs+ ' workers');
+		console.log(`Master ${process.pid} is running`);
+
+		// Fork workers.
+		for (let i = 0; i < numCPUs; i++) {
+			cluster.fork();
+		}
+
+		cluster.on('exit', (worker, code, signal) => {
+			console.log(`worker ${worker.process.pid} died`);
+	  });
+
+		return;
+	}
+  // else it's a worker. continue.
+	console.log(`Worker ${process.pid} started`);
+
+}
+else {
+  console.log('Starting app in non-cluster mode. (To start in cluster mode, pass CLUSTER=yes in config file)');
+}
+
 
 var app = require('../app');
-var debug = require('debug')('popeye:server');
 var http = require('http');
+
 
 /**
  * Get port from environment and store in Express.
@@ -86,5 +117,5 @@ function onListening() {
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+  console.log('Listening on ' + bind);
 }

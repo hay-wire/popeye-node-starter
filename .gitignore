@@ -1,3 +1,5 @@
 .idea/
 *.log
+kick.sh
+node_modules
 

@@ -1,6 +1,5 @@
 
 const mongoose = require("mongoose");
-mongoose.set('debug', true);
 const debug = require("debug")("popeye:models:user");
 const bcrypt = require("bcrypt");
 
@@ -52,8 +51,6 @@ userSchema.statics.checkIfUserExists = function(email){
             return {error: true};
         });
 };
-
-mongoose.set('debug', true);
 
 
 userSchema.statics.getUser = (userId) => {

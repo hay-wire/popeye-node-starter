@@ -1,6 +1,5 @@
 
 const mongoose = require("mongoose");
-mongoose.set('debug', true);
 const debug = require("debug")("popeye:models:user");
 const bcrypt = require("bcrypt");
 
@@ -53,15 +52,14 @@ userSchema.statics.checkIfUserExists = function(email){
         });
 };
 
-mongoose.set('debug', true);
 
-
-userSchema.statics.getUser = async (userId) => {
+userSchema.statics.getUser = (userId) => {
 		debug("getUser called model");
-		return await User
-				.findOne({ _id: userId })
+		return User
+				.findOne({ _id: userId }, {password: 0, _v: 0})
 				.then((result) => {
 					debug("getUser: ", result);
+					return result;
 				})
 };
 

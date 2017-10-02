@@ -183,11 +183,15 @@ exports.signIn = (req, res)=>{
 };
 
 exports.getUser = async (req, res) => {
-    let userId = req.params.userId;
-    if(userId === 'me') {
-        userId = req.user._id;
+    let userId = req.user._id;  // current user's ID
+
+    // if this user has permission to manage other users and he is not asking about himself
+    if(userHelper.hasPermission(req.user, configConsts.USER_PERMISSIONS.MANAGE_USERS) && (req.params.userId !== 'me')) {
+        // allow him to use other user's id
+        userId = req.params.userId;
     }
-    	debug('get user: ', userId);
+
+    debug('get user: ', userId);
     const user = await User.getUser(userId);
     debug('user details: ', user);
     res.json({
@@ -200,20 +204,27 @@ exports.getUser = async (req, res) => {
 
 exports.updatePermissions = async (req, res) => {
     let permissions = req.body.permissions;
-    let userId = req.params.userId;
-    if(userId === 'me') {
-        userId = req.user._id;
+    let userId = req.user._id;  // current user's ID
+
+    // if this user has permission to manage other users and he is not asking about himself
+    if(userHelper.hasPermission(req.user, configConsts.USER_PERMISSIONS.MANAGE_USERS) && (req.params.userId !== 'me')) {
+        // allow him to use other user's id
+        userId = req.params.userId;
     }
 
-    const result = await User.updatePermissions(userId, permissions);
+	  const result = await User.updatePermissions(userId, permissions);
     res.json({ error: false, errors: [], data: result });
 };
 
 exports.getPermissions = async(req, res) => {
-    let userId = req.params.userId;
-    if(userId === 'me' || !userHelper.hasPermission(configConsts.USER_PERMISSIONS.MANAGE_USERS)){
-        userId = req.user._id;
+    let userId = req.user._id;  // current user's ID
+
+    // if this user has permission to manage other users and he is not asking about himself
+    if(userHelper.hasPermission(req.user, configConsts.USER_PERMISSIONS.MANAGE_USERS) && (req.params.userId !== 'me')) {
+        // allow him to use other user's id
+        userId = req.params.userId;
     }
+
     const userPermissions = await User.getPermissions(userId);
     res.json({error: false, errors:[], data: userPermissions});
 };

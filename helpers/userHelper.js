@@ -2,6 +2,8 @@
  * Created by haywire on 01/10/17.
  */
 
+const debug = require('debug')('popeye:helpers:userhelper');
+
 exports.ensurePermission = (permission) => {
 	return (req, res, next) => {
 
@@ -21,5 +23,6 @@ exports.ensurePermission = (permission) => {
 
 
 const hasPermission = exports.hasPermission = (user, permission) => {
+	debug(user, "has permission: ", permission, " isSuperUSER? ", (user.permissions.indexOf('*') >= 0), " or has local permission: ", (user.permissions.indexOf(permission) >= 0));
 	return (user.permissions.indexOf('*') >= 0) || (user.permissions.indexOf(permission) >= 0);
 };

@@ -16,7 +16,7 @@ dotenv.load({ path: '.env' });
 var app = express();
 app.use(helmet());
 
-mongoose.createConnection(process.env.MONGODB);
+mongoose.connect(process.env.MONGODB);
 mongoose.connection.on('error', ()=>{
   console.log("MongoDB connection error. Please make sure that MongoDB is running.");
   process.exit(1);

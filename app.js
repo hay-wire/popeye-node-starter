@@ -7,19 +7,21 @@ var bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+mongoose.Promise = Promise;
+const helmet = require('helmet');
+
 
 dotenv.load({ path: '.env' });
 
 var app = express();
+app.use(helmet());
 
-mongoose.connect(process.env.MONGODB || process.env.MONGODB_URI);
+mongoose.connect(process.env.MONGODB);
 mongoose.connection.on('error', ()=>{
   console.log("MongoDB connection error. Please make sure that MongoDB is running.");
   process.exit(1);
 });
 
-var index = require('./routes/index');
-var api = require('./routes/api');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -52,20 +54,22 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 //define controllers
-const userController = require("./controllers/user");
-const jwtHelper = require("./helpers/jwtHelper");
+const tokenHelper = require("./helpers/tokenHelper");
 
-app.use('/', index);
-app.use('/api', jwtHelper.verify, api);
+const indexRouter = require('./routes/index');
+const appRouter = require('./routes/app');
+const authRouter = require('./routes/auth');
+const userRouter = require('./routes/user');
 
-// signUp and signIn apis
-app.post("/signUp", userController.validateAuthCredentials, userController.signUp);
-app.post("/signIn", userController.validateAuthCredentials, userController.signIn);
+app.use('/', indexRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/app', tokenHelper.validate, appRouter);
+app.use('/api/user', tokenHelper.validate, userRouter);
 
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
+  const err = new Error('Not Found');
   err.status = 404;
   next(err);
 });

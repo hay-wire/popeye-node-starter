@@ -2,9 +2,14 @@
  * Created by sachin on 6/8/17.
  */
 
+"use strict";
+
 const debug = require('debug')("popeye:controllers:user");
 const User = require('../Models/User');
-const JWT = require('../helpers/jwtHelper');
+const tokenHelper = require('../helpers/tokenHelper');
+const userHelper = require('../helpers/userHelper');
+const configConsts = require('../config/constants');
+const moment = require('moment');
 
 exports.validateAuthCredentials = (req, res, next)=>{
 
@@ -62,6 +67,7 @@ exports.signUp = (req, res)=>{
             user.save((err) => {
                 // debug(err);
                 if (err) {
+									  debug("Sign up save user Error: ", err);
                     return res.status(400).json({
                         error: true,
                         errors: [{
@@ -74,14 +80,13 @@ exports.signUp = (req, res)=>{
                 }
                 return res.status(200).json({
                     error: false,
-                    errors: [{
-                        param: "User",
-                        msg: "Successfully saved a new user."
-                    }],
-                    msg: "USER_SAVED",
-                    data: []
+                    errors: [],
+                    msg: "USER_REGISTERED",
+                    data: {}
                 });
-            }).catch((err) => {
+            })
+            .catch((err) => {
+							  debug("Sign up mini Error: ", err);
                 return res.status(500).json({
                     error: true,
                     errors: [{
@@ -93,6 +98,7 @@ exports.signUp = (req, res)=>{
                 });
             });
         }).catch((err)=>{
+            debug("Sign up mega Error: ", err);
             res.status(400).json({
                 error: true,
                 errors: [{
@@ -109,10 +115,13 @@ exports.signUp = (req, res)=>{
 exports.signIn = (req, res)=>{
     let email = req.body.email;
     let password = req.body.password;
+    debug('sign in called');
 
     User.checkIfUserExists(email)
         .then((result) => {
+        debug("sign in checkIfUserExists result", result);
             if (result.error) {
+							  debug("Sign in checkIfUserExists Error: ");
                 return res.status(500).json({
                     error: true,
                     errors: [{
@@ -123,6 +132,7 @@ exports.signIn = (req, res)=>{
                     data: []
                 });
             } else if (!result.data) {
+							  debug("Sign in no user signed up ");
                 return res.status(400).json({
                     error: true,
                     errors: [{
@@ -138,11 +148,14 @@ exports.signIn = (req, res)=>{
 
             user.comparePassword(password, function(err, isMatch) {
                 // debug("after comparing passwords!");
+							  debug("Sign in compare password matched?: ", isMatch, err);
                 if (isMatch) {
 
-                    const token = JWT.sign({
+                    const token = tokenHelper.sign({
                         _id: user._id,
-                        email: user.email});
+                        email: user.email,
+                        permissions: user.permissions
+                    });
 
                     return res.status(200).json({
                         error: false,
@@ -167,4 +180,40 @@ exports.signIn = (req, res)=>{
             });
 
         });
+};
+
+exports.getUser = async (req, res) => {
+    let userId = req.params.userId;
+    if(userId === 'me') {
+        userId = req.user._id;
+    }
+    	debug('get user: ', userId);
+    const user = await User.getUser(userId);
+    debug('user details: ', user);
+    res.json({
+      error: false,
+      errors: [],
+      data: user
+    });
+
+};
+
+exports.updatePermissions = async (req, res) => {
+    let permissions = req.body.permissions;
+    let userId = req.params.userId;
+    if(userId === 'me') {
+        userId = req.user._id;
+    }
+
+    const result = await User.updatePermissions(userId, permissions);
+    res.json({ error: false, errors: [], data: result });
+};
+
+exports.getPermissions = async(req, res) => {
+    let userId = req.params.userId;
+    if(userId === 'me' || !userHelper.hasPermission(configConsts.USER_PERMISSIONS.MANAGE_USERS)){
+        userId = req.user._id;
+    }
+    const userPermissions = await User.getPermissions(userId);
+    res.json({error: false, errors:[], data: userPermissions});
 };

@@ -72,7 +72,7 @@ userSchema.statics.getPermissions = (userId) => {
 
 userSchema.statics.updatePermissions = (userId, permissions) => {
     return User
-        .findOneAndUpdate({_id: userId}, { $set: { permissions: permissions } } )
+        .findOneAndUpdate({_id: userId}, { $set: { permissions: permissions } }, {new: true, fields: { permissions: 1 }} )
 };
 
 

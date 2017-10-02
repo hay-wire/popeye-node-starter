@@ -36,6 +36,7 @@ exports.signUp = (req, res)=>{
 
     const email = req.body.email;
     const password = req.body.password;
+    const name = req.body.name || null;
 
     User.checkIfUserExists(email)
         .then((result) => {
@@ -62,6 +63,10 @@ exports.signUp = (req, res)=>{
             }
 
             let userObj = {email: email, password: password};
+            if(name){
+                userObj.name = name;
+            }
+
             let user = new User(userObj);
 
             user.save((err) => {

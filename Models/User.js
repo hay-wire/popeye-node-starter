@@ -80,6 +80,25 @@ userSchema.statics.getUser = (userId) => {
 				})
 };
 
+userSchema.statics.getUsersList = (page, searchTerm, permissionsList)=>{
+		page = page || 1;
+		const where = {};
+
+		if(searchTerm){
+				searchTerm = new RegExp('.*'+searchTerm+'.*', 'i');
+				where['$or'] = [ { name: searchTerm}, { phone: searchTerm}, { email: searchTerm } ]
+		}
+
+		if(permissionsList && permissionsList.length){
+				where['permissions'] = { $in: permissionsList }
+		}
+
+		return User.find(where, { password: 0 })
+				.skip((page-1)*configConsts.USERS_PAGINATION_PER_PAGE_LIMIT)
+				.limit(configConsts.USERS_PAGINATION_PER_PAGE_LIMIT);
+};
+
+
 userSchema.statics.getPermissions = (userId) => {
 		return User
 				.findOne({ _id: userId }, { permissions: 1 })

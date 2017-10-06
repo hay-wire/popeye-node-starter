@@ -10,6 +10,7 @@ const userController = require("../controllers/user");
 router.get("/:userId", userController.getUser);
 router.post("/:userId/permissions", userHelper.ensurePermission(configConsts.USER_PERMISSIONS.MANAGE_USERS), userController.updatePermissions);
 router.get("/:userId/permissions", userController.getPermissions);
+router.get("/get/list", userHelper.ensurePermission(configConsts.USER_PERMISSIONS.MANAGE_USERS), userController.getUsersList);
 
 
 module.exports = router;

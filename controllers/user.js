@@ -404,8 +404,8 @@ exports.OTPSignIn  = async (req, res) => {
 		}
 		else {
     		user = existingUser;
-    		delete user.password;
 		}
+		delete user.password;
 
 		if(!user || !user._id){
 				return res.status(500).send({
@@ -433,6 +433,60 @@ exports.OTPSignIn  = async (req, res) => {
 };
 
 
+exports.socialSignIn = async (req, res) => {
+		debug("Social sign in got user: ", req.user);
+
+		let socialUser = req.user;
+		let existingUser = await User.checkIfUserExists(socialUser.id, socialUser.kind);
+
+		let user = {};
+
+		if(!existingUser){
+				const userData = {
+						password: randomstring.generate(),
+						status: configConsts.USER_STATUS.ACTIVE
+				};
+
+				// push facebook, google, etc in the user data
+				userData[socialUser.kind] = socialUser.id;
+
+				try { userData.email = socialUser.emails[0].value } catch(ex){}
+				userData.name = socialUser.name || null;
+
+				// user does not exist. create one!
+				user = new User(userData);
+				user = await user.save();
+		}
+		else {
+				user = existingUser;
+		}
+		delete user.password;
+
+		if(!user || !user._id){
+				return res.status(500).send({
+						error: true,
+						errors: [{ param: 'DB_ERROR', message: 'Error saving user. Please try again later.' }],
+						data: {}
+				});
+		}
+		else {
+
+				const token = tokenHelper.sign({
+						_id: user._id,
+						name: user.name,
+						email: user.email,
+						phone: user.phone,
+						permissions: user.permissions
+				});
+
+				res.send({
+						error: false,
+						errors: [],
+						data: token
+				});
+		}
+
+};
 
 exports.getUser = async (req, res) => {
     let userId = req.user._id;  // current user's ID
@@ -452,6 +506,15 @@ exports.getUser = async (req, res) => {
       data: user
     });
 
+};
+
+exports.getUsersList = async(req, res) => {
+		const page = parseInt(req.query.page) || 1;
+		const searchTerm = req.query.searchTerm || null;
+		const permissionsList = typeof req.query.permissionsList === 'string' ? req.query.permissionsList.split(',') : null;
+
+		const usersList = await User.getUsersList(page, searchTerm, permissionsList);
+		res.json({ error: false, errors: [], data: usersList });
 };
 
 exports.updatePermissions = async (req, res) => {

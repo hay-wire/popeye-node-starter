@@ -20,7 +20,7 @@ exports.validate = (req, res, next)=>{
                     error: true,
                     errors: [{param: 'AUTH_TOKEN', msg: err.message}]
                 });
-            } else {
+            } else{
                 req.user = decoded;
                 next();
             }

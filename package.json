@@ -15,10 +15,17 @@
     "express-validator": "^3.2.1",
     "helmet": "^3.8.2",
     "jsonwebtoken": "^7.4.2",
+    "lodash": "^4.17.4",
     "moment": "^2.18.1",
     "mongoose": "^4.11.5",
     "morgan": "~1.8.1",
+    "nodemailer": "^4.1.2",
+    "otplib": "^6.0.3",
     "pug": "~2.0.0-beta11",
-    "serve-favicon": "~2.4.2"
+    "randomstring": "^1.1.5",
+    "request": "^2.83.0",
+    "sendotp": "^1.2.8",
+    "serve-favicon": "~2.4.2",
+    "slackbots": "^1.1.0"
   }
 }

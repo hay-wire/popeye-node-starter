@@ -2,12 +2,21 @@
 const mongoose = require("mongoose");
 const debug = require("debug")("popeye:models:user");
 const bcrypt = require("bcrypt");
+const configConsts = require('../config/constants');
 
 const userSchema = new mongoose.Schema({
 		name: { type: String, default: null },
-    email: {type: String, lowercase: true, required: true, unique: true},
-    password: {type: String, required: true},
+
+		phone: { type: String, sparse: true, required: false, unique: true },
+		email: { type: String, lowercase: true, sparse: true, required: false, unique: true },
+		password: {type: String, required: true},
+
+		facebook: { type: String, sparse: true, required: false, unique: true },	// facebook user id
+		google: { type: String, sparse: true, required: false, unique: true },		// google user id
+
+    status: { type: String, default: configConsts.USER_STATUS.PENDING },
     permissions: { type: [String], default: [] }
+
 },{timestamps: true});
 
 userSchema.pre('save', function(next) {
@@ -39,17 +48,24 @@ userSchema.methods.comparePassword = function(candidatePassword, cb) {
     });
 };
 
-userSchema.statics.checkIfUserExists = function(email){
-	debug("Finding user: ", email);
+userSchema.statics.checkIfUserExists = function(username, kind){
+		debug("Finding user: ", username, ' of type: ', kind);
+		const where = {};
+		if(!kind){
+				where['email'] = username;
+		}
+		else {
+				where[kind] = username;
+		}
     return this
-        .findOne({email: email})
+        .findOne(where)
         .then((result)=>{
             debug(result);
-            return {error: false, data: result};
+            return result;
         })
         .catch((err)=>{
             debug(err);
-            return {error: true};
+            throw err;
         });
 };
 

@@ -332,7 +332,7 @@ exports.OTPSignIn  = async (req, res) => {
     });
 		debug('isValid: ', isValid);
 
-    if(false && !isValid) {
+    if(!isValid) {
         return res.status(400).send({
             error: true,
             errors: [{ param: 'otp', message: 'Incorrect OTP' }],

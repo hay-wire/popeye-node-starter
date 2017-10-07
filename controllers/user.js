@@ -54,155 +54,119 @@ exports.signUp = (req, res)=>{
     const password = req.body.password;
     const name = req.body.name || null;
 
-    User.checkIfUserExists(username)
+    User.checkIfUserExists(username, 'email')
         .then((result) => {
-            if (result.error) {
-                return res.status(500).json({
-                    error: true,
-                    errors: [{
-                        param: "DB_ERROR",
-                        msg: "INTERNAL_SERVER_ERROR"
-                    }],
-                    msg: "INTERNAL_SERVER_ERROR",
-                    data: []
-                });
-            } else if (result.data) {
-                return res.status(400).json({
-                    error: true,
-                    errors: [{
-                        param: "User",
-                        msg: "USER_EXISTS"
-                    }],
-                    msg: "USER_EXISTS",
-                    data: []
-                });
+            if (result && result._id) {
+								return res.status(400).json({
+										error: true,
+										errors: [{
+											param: "username",
+											msg: "USER_ALREADY_EXISTS"
+										}],
+										data: {}
+								});
             }
 
-            let userObj = {username: username, password: password};
+            let userObj = { email: username, password: password };
             if(name){
                 userObj.name = name;
             }
 
             let user = new User(userObj);
 
-            user.save((err) => {
-                // debug(err);
-                if (err) {
-									  debug("Sign up save user Error: ", err);
-                    return res.status(400).json({
-                        error: true,
-                        errors: [{
-                            param: "Saving",
-                            msg: err.message
-                        }],
-                        msg: "ERROR_OCCURRED_WHILE_SAVING_USER",
-                        data: []
-                    });
-                }
-                return res.status(200).json({
-                    error: false,
-                    errors: [],
-                    msg: "USER_REGISTERED",
-                    data: {}
-                });
-            })
-            .catch((err) => {
-							  debug("Sign up mini Error: ", err);
-                return res.status(500).json({
-                    error: true,
-                    errors: [{
-                        param: "Internal error",
-                        msg: err.message
-                    }],
-                    msg: "INTERNAL_SERVER_ERROR",
-                    data: []
-                });
-            });
-        }).catch((err)=>{
-            debug("Sign up mega Error: ", err);
-            res.status(400).json({
-                error: true,
-                errors: [{
-                    param: "User",
-                    msg: err.message
-                }],
-                msg: "ERROR_OCCURRED_WHILE_SEARCHING_SIMILAR_USER",
-                data: []
-            });
-        });
+            user.save()
+								.then(() => {
+										return res.status(200).json({
+												error: false,
+												errors: [],
+												data: user
+										});
+								})
+        })
+				.catch((err) => {
+						debug("Sign up Error: ", err);
+						return res.status(500).json({
+								error: true,
+								errors: [{
+										param: "DB_ERROR",
+										msg: err.message
+								}],
+								data: {}
+						});
+				});
 };
 
 
 exports.signIn = (req, res)=>{
-    let username = req.body.username;
-    let password = req.body.password;
-    debug('sign in called');
+		let username = req.body.username;
+		let password = req.body.password;
+		debug('sign in called');
 
-    User.checkIfUserExists(username)
-        .then((result) => {
-        debug("sign in checkIfUserExists result", result);
-            if (result.error) {
-							  debug("Sign in checkIfUserExists Error: ");
-                return res.status(500).json({
-                    error: true,
-                    errors: [{
-                        param: "DB_ERROR",
-                        msg: "INTERNAL_SERVER_ERROR"
-                    }],
-                    msg: "INTERNAL_SERVER_ERROR",
-                    data: []
-                });
-            } else if (!result.data) {
-							  debug("Sign in no user signed up ");
-                return res.status(400).json({
-                    error: true,
-                    errors: [{
-                        param: "User",
-                        msg: "Please SignUp first."
-                    }],
-                    msg: "USER_NOT_SIGNED_UP",
-                    data: []
-                });
-            }
+		User.checkIfUserExists(username, 'email')
+				.then((existingUser) => {
+						debug("sign in checkIfUserExists result", existingUser);
+						if (!existingUser || !existingUser._id) {
 
-            let user = result.data;
+								debug("Sign in no user signed up ");
+								return res.status(400).json({
+										error: true,
+										errors: [{
+											param: "User",
+											msg: "Please SignUp first."
+										}],
+										msg: "USER_NOT_SIGNED_UP",
+										data: []
+								});
 
-            user.comparePassword(password, function(err, isMatch) {
-                // debug("after comparing passwords!");
-							  debug("Sign in compare password matched?: ", isMatch, err);
-                if (isMatch) {
+						}
 
-                    const token = tokenHelper.sign({
-												_id: user._id,
-												name: user.name,
-												email: user.email,
-												phone: user.phone,
-												permissions: user.permissions
+
+						existingUser.comparePassword(password)
+								.catch((err) => {
+										debug("Sign in Error: ", err);
+										return res.status(500).json({
+												error: true,
+												errors: [{
+													param: "DB_ERROR",
+													msg: err.message
+												}],
+												data: {}
 										});
+								})
+								.then((isMatch) => {
+										// debug("after comparing passwords!");
+										debug("Sign in compare password matched?: ", isMatch);
+										if (isMatch) {
 
-                    return res.status(200).json({
-                        error: false,
-                        msg: "Login Successfully",
-                        data: [{
-                            token: token
-                        }]
-                    });
+												const token = tokenHelper.sign({
+														_id: existingUser._id,
+														name: existingUser.name || null,
+														phone: existingUser.phone || null,
+														email: existingUser.email,
+														permissions: existingUser.permissions
+												});
 
-                } else {
+												return res.status(200).json({
+														error: false,
+														errors: [],
+														data: token
+												});
 
-                    return res.status(401).json({
-                        error: true,
-                        errors: [{
-                            param: "Password",
-                            msg: "Password did not matched."
-                        }],
-                        msg:"Incorrect password."
-                    });
-                 // return done(null, false, { msg: 'Invalid username or password.' });
-                }
-            });
+										} else {
 
-        });
+												return res.status(401).json({
+														error: true,
+														errors: [{
+															param: "password",
+															msg: "Password did not matched."
+														}],
+														msg:"Incorrect password."
+												});
+												// return done(null, false, { msg: 'Invalid username or password.' });
+										}
+								});
+
+				});
 };
 
 

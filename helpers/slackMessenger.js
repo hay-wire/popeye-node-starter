@@ -5,7 +5,7 @@
 const debug = require('debug')('popeye:helpers:slackbot');
 const _ = require('lodash');
 
-if(process.env.OFFLINE){
+if(process.env.SLACK_OFFLINE === 'yes'){
     exports.sendAlert = debug;
     exports.sendMessage = debug;
 }

@@ -5,14 +5,9 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
-const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 mongoose.Promise = Promise;
 const helmet = require('helmet');
-
-
-
-dotenv.load({ path: '.env' });
 
 var app = express();
 app.use(helmet());

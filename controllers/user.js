@@ -67,11 +67,7 @@ exports.signUp = (req, res)=>{
 								});
             }
 
-            let userObj = { email: username, password: password };
-            if(name){
-                userObj.name = name;
-            }
-
+            let userObj = { email: username, password: password, name: name };
             let user = new User(userObj);
 
             user.save()
@@ -325,7 +321,7 @@ exports.OTPSignIn  = async (req, res) => {
 		const otpChannel = req.params.channel;
 		const username = req.body.username;
 
-		const secret = req.query.username + process.env.OTP_SECRET_SALT;
+		const secret = username + process.env.OTP_SECRET_SALT;
     const isValid = otplib.authenticator.verify({
         secret,
         token: req.body.otp

@@ -20,6 +20,9 @@ module.exports = {
 		PENDING: 0,
 		ACTIVE: 1
 	},
+	
 	USERS_PAGINATION_PER_PAGE_LIMIT: 50,
+
+	CLOUD_STORAGE_SIGNED_URL_EXPIRY: 30 // in minutes
 
 };
